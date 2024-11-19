@@ -27,15 +27,11 @@ jobs:
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
 
-      # Step 4: Apply Kubernetes manifests
+      # Step 4: Apply Kubernetes manifests with debug
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
-
-      # Step 5: Debug kubectl deployments and pods
-      - name: Debug kubectl get deployments and pods
-        run: |
+          kubectl apply -f deployment.yaml -v 9
+          kubectl apply -f service.yaml -v 9
           kubectl get deployments
           kubectl get pods
           kubectl describe deployments
