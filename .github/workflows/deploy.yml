@@ -1,0 +1,39 @@
+name: CI/CD Pipeline for Nginx Deployment
+
+on:
+  push:
+    branches:
+      - master  # Trigger the pipeline on pushes to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # The job will run on the latest Ubuntu runner
+
+    steps:
+      # Step 1: Checkout the repository to access the Kubernetes manifests
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up kubectl to interact with the Kubernetes cluster
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v2
+        with:
+          version: 'latest'
+
+      # Step 3: Set up Kubernetes config (from GitHub Secrets)
+      - name: Set up Kubernetes config
+        run: |
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+      # Step 4: Apply Kubernetes manifests to deploy Nginx "Hello World"
+      - name: Deploy Nginx "Hello World"
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+
+      # Step 5: Verify the deployment is successful
+      - name: Check deployment status
+        run: |
+          kubectl get pods
+          kubectl get svc nginx-service
+
