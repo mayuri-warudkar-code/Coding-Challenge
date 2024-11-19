@@ -1,39 +1,43 @@
-name: CI/CD Pipeline for Nginx Deployment
+name: Deploy to K3s Cluster
 
 on:
   push:
     branches:
-      - master  # Trigger the pipeline on pushes to the main branch
+      - master
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # The job will run on the latest Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository to access the Kubernetes manifests
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      # Step 2: Set up kubectl to interact with the Kubernetes cluster
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v1
-        with:
-          version: 'latest'
-
-      # Step 3: Set up Kubernetes config (from GitHub Secrets)
-      - name: Set up Kubernetes config
+      # Step 2: Install kubectl
+      - name: Install kubectl
         run: |
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          curl -LO "https://dl.k8s.io/release/v1.22.0/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          mv ./kubectl /usr/local/bin/kubectl
 
-      # Step 4: Apply Kubernetes manifests to deploy Nginx "Hello World"
-      - name: Deploy Nginx "Hello World"
+      # Step 3: Set up Kubeconfig from GitHub Secrets
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+
+      # Step 4: Apply Kubernetes manifests
+      - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
 
-      # Step 5: Verify the deployment is successful
-      - name: Check deployment status
+      # Step 5: Debug kubectl deployments and pods
+      - name: Debug kubectl get deployments and pods
         run: |
+          kubectl get deployments
           kubectl get pods
-          kubectl get svc nginx-service
+          kubectl describe deployments
+          kubectl describe pods
 
